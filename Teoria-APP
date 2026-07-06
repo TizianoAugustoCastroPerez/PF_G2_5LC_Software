@@ -1,0 +1,10 @@
+La primera pantalla contará con el logo del proyecto, un texto introductorio y dos botones para elegir si iniciar sesión o registrarse.
+Para ambas funciones, se usará firebaseauthentification junto a la base de datos de firebase para mantener registro de los usuarios creados.
+Después, cualquiera de los 2 caminos lleva a la página principal.
+En esta hay una breve introducción de la página y 4 botones al final con las siguientes opciones:
+-Ingresar lista de números telefónicos a los que llamar.
+-Perfil médico, que funcionará como un gran string.
+-Una guía más detallada de la aplicación y el proyecto.
+-Cerrar sesión (botón grande y en rojo)
+Las 3 opciones tendrán un regreso a la página principal, pero las primeras 2 específicamente permitirán que se guarde la información.
+Cuando se guarda la información, lo que pasa es que al ESP32 le llegan los cambios producidos por Bluetooth Low Energy.
