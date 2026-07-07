@@ -1,3 +1,4 @@
+// Aún no se puede usar
 #include <HardwareSerial.h>
 
 HardwareSerial sim800(2);
