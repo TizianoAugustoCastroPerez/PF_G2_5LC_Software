@@ -2,8 +2,8 @@
 #include <MPU6050.h>
 #include <math.h>
 
-#define CAIDA_LIBRE 0.4
-#define IMPACTO 2
+#define CAIDA_LIBRE 0.4 // valor esperado de caída
+#define IMPACTO 2 // valor esperado de impacto
 #define TIEMPO_VERIFICAR_IMPACTO 2000
 #define TIEMPO_ESPERA 20
 MPU6050 mpu;         // Nombre del módulo
@@ -16,7 +16,7 @@ void setup() {
   Wire.begin();
   mpu.initialize();
   while (!mpu.testConnection()) {}
-  Serial.println("Sistema listo");
+  Serial.println("Sistema listo"); // Se inicializa el MPU6050 y se espera a que se conecte
 }
 
 void loop() {
