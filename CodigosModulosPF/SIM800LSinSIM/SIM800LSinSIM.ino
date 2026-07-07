@@ -1,14 +1,15 @@
+// Sin tarjeta SIM, solo podemos porbar la comunicación entre el SIM800L y el ESP32, para saber que está funcionando y bien alimentado
 #include <HardwareSerial.h>
 
 HardwareSerial sim800(2);
 #define RXD2 16
-#define TXD2 17
-#define INTERVALO_TOTAL 3000
-#define INTERVALO_COMANDO 500
+#define TXD2 17 // pines TX y RX
+#define INTERVALO_TOTAL 3000 // En este tiempo se ejecuta toda la acción
+#define INTERVALO_COMANDO 500 // Separación de tiempo entre cada acción
 
 unsigned long ultimoCambio = 0;
 unsigned long ultimoComando = 0;
-int estado = 0;
+int estado = 0; // Variables de control de las distintas acciones
 
 void setup() {
   Serial.begin(115200);
@@ -56,3 +57,5 @@ void loop() {
     }
   }
 }
+
+// Cada caso representa 1 de las 4 mensajes posibles que puede devolver el SIM800L, chequeamos todos para asegurar que todo funciones
