@@ -1,3 +1,4 @@
+// Este código tiene pocos comentarios, serían repetitivos
 #include <Wire.h>
 #include <MPU6050.h>
 #include <math.h>
