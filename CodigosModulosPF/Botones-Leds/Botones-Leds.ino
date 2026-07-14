@@ -9,7 +9,9 @@ void setup() {
 
 void loop() {
   if (digitalRead(PIN_BOTON) == LOW) {
-    digitalWrite(PIN_LED);
+    digitalWrite(PIN_LED, HIGH);
+  } else {
+    digitalWrite(PIN_LED, LOW);
   }
 }
 // Código TOTALMENTE necesario
