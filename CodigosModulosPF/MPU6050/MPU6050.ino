@@ -6,6 +6,8 @@
 #define IMPACTO 2 // valor esperado de impacto
 #define TIEMPO_VERIFICAR_IMPACTO 2000
 #define TIEMPO_ESPERA 20
+#define CONVERSION_A_VALOR_REAL 16384.0 
+// El MPU devuelve valores digitales. 16384 es el resultado de los 32678 (valores digitales) dividido por las unidades de gravedad (2). El resultado devuelve un valor en fuerza física real
 MPU6050 mpu;         // Nombre del módulo
 int16_t ax, ay, az;  // Ejes de aceleración
 bool posibleCaida = false;
@@ -23,9 +25,9 @@ void loop() {
   if (millis() - espera >= TIEMPO_ESPERA) { // para dar un tiempo de espera entre lecturas
 
     mpu.getAcceleration(&ax, &ay, &az);
-    float Ax = ax / 16384.0;
-    float Ay = ay / 16384.0;
-    float Az = az / 16384.0;                                // Conversión
+    float Ax = ax / CONVERSION_A_VALOR_REAL;
+    float Ay = ay / CONVERSION_A_VALOR_REAL;
+    float Az = az / CONVERSION_A_VALOR_REAL;                                // Conversión
     float fuerzaCaida = sqrt(Ax * Ax + Ay * Ay + Az * Az);  // calcula aceleración/fuerza total
 
     // CAÍDA LIBRE
