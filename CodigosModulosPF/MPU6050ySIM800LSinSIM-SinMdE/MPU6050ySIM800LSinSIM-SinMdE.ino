@@ -13,6 +13,7 @@ TaskHandle_t tarea2;  // Va en el core 1
 #define IMPACTO 2
 #define TIEMPO_VERIFICAR_IMPACTO 2000
 #define TIEMPO_ESPERA 20
+#define CONVERSION_A_VALOR_REAL 16384.0
 #define RXD2 16
 #define TXD2 17
 #define INTERVALO_TOTAL 3000
@@ -63,9 +64,9 @@ void Loop1(void* pvParameters) {
     if (millis() - espera >= TIEMPO_ESPERA) {  // para dar un tiempo de espera entre lecturas
 
       mpu.getAcceleration(&ax, &ay, &az);
-      float Ax = ax / 16384.0;
-      float Ay = ay / 16384.0;
-      float Az = az / 16384.0;                                // Conversión
+      float Ax = ax / CONVERSION_A_VALOR_REAL;
+      float Ay = ay / CONVERSION_A_VALOR_REAL;
+      float Az = az / CONVERSION_A_VALOR_REAL;                                // Conversión
       float fuerzaCaida = sqrt(Ax * Ax + Ay * Ay + Az * Az);  // calcula aceleración/fuerza total
 
       // CAÍDA LIBRE
