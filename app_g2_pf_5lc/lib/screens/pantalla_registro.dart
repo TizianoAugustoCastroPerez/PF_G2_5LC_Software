@@ -14,19 +14,61 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
   final TextEditingController passwordController = TextEditingController();
 
   Future<void> registrarse() async {
+    
+    if (emailController.text.trim().isEmpty ||
+        passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Complete todos los campos."),
+        ),
+      );
+      return;
+    }
+
+    if (passwordController.text.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "La contraseña debe tener al menos 6 caracteres.",
+          ),
+        ),
+      );
+      return;
+    }
+
     try {
       await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text,
       );
 
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Cuenta creada correctamente."),
+        ),
+      );
+
       context.go('/principal');
     } on FirebaseAuthException catch (e) {
+      String mensaje;
+
+      switch (e.code) {
+        case 'email-already-in-use':
+          mensaje = 'Ese correo ya está registrado.';
+          break;
+        case 'invalid-email':
+          mensaje = 'El correo electrónico no es válido.';
+          break;
+        case 'weak-password':
+          mensaje = 'La contraseña es demasiado débil.';
+          break;
+        default:
+          mensaje = e.message ?? 'Ocurrió un error al registrarse.';
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            e.message ?? "Ocurrió un error al registrarse.",
-          ),
+          content: Text(mensaje),
         ),
       );
     }

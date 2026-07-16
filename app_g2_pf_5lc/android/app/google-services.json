@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "381898743533",
+    "project_id": "pf-g2-cuidando",
+    "storage_bucket": "pf-g2-cuidando.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:381898743533:android:50cd7e95b061acad95f6e4",
+        "android_client_info": {
+          "package_name": "com.example.app_g2_pf_5lc"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBeaMzvg9mvcYY2nbQgSnklxYxxjTZ5vfc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
