@@ -1,4 +1,4 @@
-// Este código tiene pocos comentarios, serían repetitivos
+// Esta es la primera versión del código definitivo del proyecto, de ahora en adelante va a ser el único código que reciba cambios
 #include <Wire.h>
 #include <MPU6050.h>
 #include <math.h>
