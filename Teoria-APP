@@ -8,3 +8,4 @@ En esta hay una breve introducción de la página y 4 botones al final con las s
 -Cerrar sesión (botón grande y en rojo)
 Las 3 opciones tendrán un regreso a la página principal, pero las primeras 2 específicamente permitirán que se guarde la información.
 Cuando se guarda la información, lo que pasa es que al ESP32 le llegan los cambios producidos por Bluetooth Low Energy.
+Falta también embellecer la página, ahora mismo es fea la apariencia.
