@@ -15,7 +15,7 @@ HardwareSerial sim800(2);
 #define ESPERA_PULSO 30
 #define CONVERSION_A_VALOR_REAL 16384.0
 #define ESPERA_CONECTAR_LLAMADA 10000
-String numero = "XXXXXXXXXX";
+String numero = "+54911...";
 
 unsigned long ultimoCambio = 0;
 unsigned long ultimoComando = 0;
@@ -84,7 +84,7 @@ void loop() {
       float Ax = ax / CONVERSION_A_VALOR_REAL;
       float Ay = ay / CONVERSION_A_VALOR_REAL;
       float Az = az / CONVERSION_A_VALOR_REAL;                // Conversión
-      float fuerzaCaida = sqrt(Ax * Ax + Ay * Ay + Az * Az);  // calcula aceleración/fuerza total
+      float fuerzaCaida = sqrt(Ax * Ax + Ay * Ay + Az * Az);  // Calcula aceleración/fuerza total
 
       // CAÍDA LIBRE
       if (fuerzaCaida < CAIDA_LIBRE && posibleCaida == false) {
@@ -134,6 +134,8 @@ void loop() {
         }
       }
       if (condicion1 == true && condicion2 == true && condicion3 == true && millis() - tiempoConectarLlamada <= ESPERA_CONECTAR_LLAMADA) {
+        Serial.println("Enviando los mensajes primero...")
+        enviarSMS();
         Serial.println("Realizando llamada..."); // Se realizaron exitosamente los 3 chequeos
         sim800.print("ATD");
         sim800.print(numero);
@@ -144,11 +146,72 @@ void loop() {
         delay(20000);
         estadoActual = esperaCaida;
       }
-      if (millis() - tiempoConectarLlamada >= ESPERA_CONECTAR_LLAMADA) { // Aún tengo que  definir que pasa en este caso
+      if (millis() - tiempoConectarLlamada >= ESPERA_CONECTAR_LLAMADA) { 
+        // Aún tengo que  definir que pasa en este caso, dependiendo de que si la conexión del SIM800L es estable o no, que aún se debe probar
         Serial.println("No se pudo realizar la conexión");
         estadoActual = esperaCaida;
       }
     break;
   }
 
+}
+
+void enviarSMS() {
+  unsigned long espera;
+  int casos = 1;
+  bool ejecutarUnaVez = true;
+  bool ejecutarFuncion = true;
+  int tiempoCaso1 = 300;
+  int tiempoCaso2 = 600;
+  int tiempoCaso3 = 1000;
+  int tiempoCaso4 = 6000;
+  espera = millis();
+
+  while (ejecutarFuncion) {
+    if (casos == 1) {
+      if (ejecutarUnaVez == true) {
+        // Cambiar a texto
+        sim800.println("AT+CMGF=1");
+        ejecutarUnaVez = false;
+      }
+      if (millis() - espera >= tiempoCaso1) {
+        casos = 2;
+        ejecutarUnaVez = true;
+      }
+    }
+    if (casos == 2) {
+      if (ejecutarUnaVez == true) {
+        // Número de contacto
+        sim800.print("AT+CMGS=\"");
+        sim800.print(numero);
+        sim800.println("\"");
+        ejecutarUnaVez = false;
+      }
+      if (millis() - espera >= tiempoCaso2) {
+        casos = 3;
+        ejecutarUnaVez = true;
+      }
+    }
+    if (casos == 3) {
+      if (ejecutarUnaVez == true) {
+        // Mensaje
+        sim800.print("Se detectó una caída.");
+        ejecutarUnaVez = false;
+      }
+      if (millis() - espera >= tiempoCaso3) {
+        casos = 4;
+        ejecutarUnaVez = true;
+      }
+    }  
+    if (casos == 4) {
+      if (ejecutarUnaVez == true) {
+        // Enviado
+        sim800.write(26);
+        ejecutarUnaVez = false;
+      }
+      if (millis() - espera >= tiempoCaso4) {
+        ejecutarFuncion = false;
+      }
+    }  
+  }
 }
