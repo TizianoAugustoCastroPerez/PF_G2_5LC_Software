@@ -3,12 +3,15 @@
 #include <MPU6050.h>
 #include <math.h>
 #include <HardwareSerial.h>
+#include <Adafruit_NeoPixel.h>
 
 HardwareSerial sim800(2);
 #define RXD2 16
 #define TXD2 17
 #define PIN_LED 18
 #define PIN_BOTON 19
+#define PIN_DATOS_ANILLO 13  
+#define NUM_LEDS 16
 #define CAIDA_LIBRE 0.4
 #define IMPACTO 2
 #define TIEMPO_VERIFICAR_IMPACTO 2000
@@ -29,6 +32,11 @@ unsigned long espera = 20;
 bool condicion1 = false;
 bool condicion2 = false;
 bool condicion3 = false;
+
+const int rojo  = 255;  
+const int verde = 255; 
+const int azul  = 255;
+Adafruit_NeoPixel tira = Adafruit_NeoPixel(NUM_LEDS, PIN_DATOS, NEO_GRB + NEO_KHZ800);
 
 typedef enum {
   esperaCaida,
@@ -74,6 +82,10 @@ void setup() {
   delay(3000);  // Tiempo de arranque del módulo
   sim800.println("AT");
   Serial.println("Sistema listo");
+  tira.begin();      
+  tira.setBrightness(200);
+  tira.setPixelColor(NUM_LEDS, tira.Color(rojo, verde, azul));
+  tira.show();
 }
 
 void loop() {
