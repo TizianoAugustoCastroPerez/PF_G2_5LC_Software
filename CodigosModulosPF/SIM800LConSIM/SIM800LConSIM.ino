@@ -1,20 +1,19 @@
-// Aún no se puede usar
 #include <HardwareSerial.h>
 
 HardwareSerial sim800(2);
 #define RXD2 16
 #define TXD2 17
-String numero = "XXXXXXXXXX";
 
-bool enviarComando(String comando, unsigned long tiempoEspera = 2000) {
+// Formato internacional para Claro Argentina: "+549" + área sin 0 + número sin 15 (Celu de Jojo)
+String numero = "+5491128550660";
 
-  while (sim800.available()) {
-    sim800.read();
-  }
+String enviarComando(String comando, unsigned long tiempoEspera = 2000) {
+  while (sim800.available()) sim800.read(); // Limpiar buffer de entrada
 
   Serial.print("Enviando: ");
   Serial.println(comando);
   sim800.println(comando);
+  
   unsigned long inicio = millis();
   String respuesta = "";
 
@@ -24,46 +23,43 @@ bool enviarComando(String comando, unsigned long tiempoEspera = 2000) {
       respuesta += c;
       Serial.write(c);
     }
-    if (respuesta.indexOf("OK") != -1) {
-      return true;
-    }
   }
-
-  return false;
+  return respuesta;
 }
 
+bool estaRegistradoEnRed() {
+  String resp = enviarComando("AT+CREG?", 2000);
+  // Revisa si la respuesta contiene 0,1 (red local) o 0,5 (roaming)
+  return (resp.indexOf("+CREG: 0,1") != -1 || resp.indexOf("+CREG: 0,5") != -1);
+}
 
 void setup() {
-
   Serial.begin(115200);
-
   sim800.begin(9600, SERIAL_8N1, RXD2, TXD2);
-  Serial.println("Esperando inicio del SIM800...");
+
+  Serial.println("Iniciando SIM800L...");
   delay(3000);
 
+  enviarComando("AT");
+  enviarComando("AT+CSQ"); // Muestra el nivel de señal
+
+  Serial.println("Esperando registro en la red celular...");
+  while (!estaRegistradoEnRed()) {
+    Serial.println("-> Sin registro en red aun. Reintentando en 3s...");
+    delay(3000);
+  }
   
+  Serial.println(">>> ¡REGISTRADO CORRECTAMENTE EN LA RED! <<<");
 }
 
 void loop() {
-  if (!enviarComando("AT")) {
-    Serial.println("Error de comunicacion con SIM800.");
-    return;
-  }
-  if (!enviarComando("AT+CSQ")) {
-    Serial.println("No se pudo leer la intensidad de señal.");
-    return;
-  }
-  if (!enviarComando("AT+CREG?")) {
-    Serial.println("No se pudo verificar el registro en la red.");
-    return;
-  }
+  Serial.println("Realizando llamada...");
+  enviarComando("ATD" + numero + ";", 3000);
 
-  Serial.println("Realizando llamada..."); // Se realizaron exitosamente los 3 chequeos
-  sim800.print("ATD");
-  sim800.print(numero);
-  sim800.println(";"); // El SIM arranca la llamada
-  delay(15000);
+  delay(15000); // 15 segundos sonando/en llamada
+
   Serial.println("Finalizando llamada...");
-  sim800.println("ATH");
-  delay(20000);
+  enviarComando("ATH", 2000);
+
+  delay(20000); // Esperar 20 segundos antes del siguiente intento
 }
