@@ -33,10 +33,7 @@ unsigned long tiempoCaida = 0;
 unsigned long espera = 20;
 
 // Variables NeoPixel
-const int rojo  = 255;  
-const int verde = 255; 
-const int azul  = 255;
-Adafruit_NeoPixel tira = Adafruit_NeoPixel(NUM_LEDS, PIN_DATOS_ANILLO, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel tira(NUM_LEDS, PIN_DATOS, NEO_GRB + NEO_KHZ800);
 
 // Máquina de Estados
 typedef enum {
@@ -145,10 +142,9 @@ void setup() {
 
   // Inicialización NeoPixel
   tira.begin();      
-  tira.setBrightness(200);
-  tira.setPixelColor(0, tira.Color(rojo, verde, azul));
+  tira.setBrightness(255);
+  tira.fill(tira.Color(255, 255, 255));
   tira.show();
-
   // Inicialización SIM800L
   sim800.begin(9600, SERIAL_8N1, RXD2, TXD2);
   delay(3000);
@@ -227,4 +223,6 @@ void loop() {
       break;
     }
   }
+  tira.fill(tira.Color(255, 255, 255));
+  tira.show();
 }
