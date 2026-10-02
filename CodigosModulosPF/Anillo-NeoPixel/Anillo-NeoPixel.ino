@@ -7,9 +7,12 @@ Adafruit_NeoPixel tira(NUM_LEDS, PIN_DATOS, NEO_GRB + NEO_KHZ800);
 
 void setup() {
   tira.begin();
-  tira.setBrightness(100);
+  tira.setBrightness(255);
   tira.fill(tira.Color(255, 255, 255));
   tira.show();
 }
 
-void loop() {}
+void loop() {
+  tira.fill(tira.Color(255, 255, 255));
+  tira.show();
+}
