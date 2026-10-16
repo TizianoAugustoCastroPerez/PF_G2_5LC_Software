@@ -72,7 +72,7 @@ String obtenerMacLimpia() {
 String obtenerUserIdDesdeFirestore() {
   String idUsuarioEncontrado = "";
   if (Firebase.ready()) {
-    String mac = WiFi.macAddress(); 
+    String mac = obtenerMacLimpia();
     Serial.print("Buscando usuario con MAC: ");
     Serial.println(mac);
     FirebaseJson json;
