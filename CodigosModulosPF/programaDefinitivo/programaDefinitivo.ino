@@ -24,9 +24,8 @@ FirebaseConfig config;
 HardwareSerial sim800(2);
 #define RXD2 16
 #define TXD2 17
-#define PIN_LED 18
 #define PIN_BOTON 19
-#define PIN_DATOS_ANILLO 13  
+#define PIN_DATOS_ANILLO 27  
 #define NUM_LEDS 16
 
 // Constantes de Caída e Impacto
@@ -50,6 +49,10 @@ bool posibleCaida = false;
 unsigned long tiempoCaida = 0;
 unsigned long espera = 20;
 
+// Variables Botón de Emergencia (Antirrebote no bloqueante)
+unsigned long tiempoBoton = 0;
+bool posibleBoton = false;
+
 // Variables NeoPixel
 Adafruit_NeoPixel tira(NUM_LEDS, PIN_DATOS_ANILLO, NEO_GRB + NEO_KHZ800);
 
@@ -70,6 +73,7 @@ String obtenerMacLimpia() {
   mac.toUpperCase();
   return mac;
 }
+
 String obtenerUserIdDesdeFirestore() {
   String idUsuarioEncontrado = "";
   if (Firebase.ready()) {
@@ -106,6 +110,7 @@ String obtenerUserIdDesdeFirestore() {
   }
   return idUsuarioEncontrado;
 }
+
 void obtenerTelefonosFirestore() {
   if (Firebase.ready()) {
     String userId = obtenerUserIdDesdeFirestore();
@@ -159,10 +164,12 @@ String enviarComando(String comando, unsigned long tiempoEspera = 2000) {
   }
   return respuesta;
 }
+
 bool estaRegistradoEnRed() {
   String resp = enviarComando("AT+CREG?", 2000);
   return (resp.indexOf("+CREG: 0,1") != -1 || resp.indexOf("+CREG: 0,5") != -1);
 }
+
 void enviarSMS(String numDestino) {
   Serial.print("Enviando SMS a: ");
   Serial.println(numDestino);
@@ -254,10 +261,8 @@ bool realizarLlamadaVerificada(String numDestino) {
   return atendio;
 }
 
-
 void setup() {
   Serial.begin(115200);
-  pinMode(PIN_LED, OUTPUT);
   pinMode(PIN_BOTON, INPUT_PULLUP);
   
   // Inicialización MPU6050
@@ -297,10 +302,27 @@ void setup() {
   Serial.println("Sistema listo");
 }
 
-
 void loop() {
   switch (estadoActual) {
     case esperaCaida: {
+      if (posibleBoton == false) {
+        if (digitalRead(PIN_BOTON) == LOW) {
+          posibleBoton = true;
+          tiempoBoton = millis();
+        }
+      } else {
+        if (digitalRead(PIN_BOTON) == LOW) {
+          if (millis() - tiempoBoton >= ESPERA_PULSO) {
+            Serial.println("¡Botón de emergencia presionado! Iniciando secuencia de llamada...");
+            posibleBoton = false;
+            tiempoConectarLlamada = millis();
+            estadoActual = llamada;
+            break;
+          }
+        } else {
+          posibleBoton = false;
+        }
+      }
       mpu.getAcceleration(&ax, &ay, &az);
       float Ax = ax / CONVERSION_A_VALOR_REAL;
       float Ay = ay / CONVERSION_A_VALOR_REAL;
@@ -321,13 +343,13 @@ void loop() {
       float Ay = ay / CONVERSION_A_VALOR_REAL;
       float Az = az / CONVERSION_A_VALOR_REAL;
       float fuerzaImpacto = sqrt(Ax * Ax + Ay * Ay + Az * Az);
-      if (posibleCaida && millis() - tiempoCaida <= TIEMPO_VERIFICAR_IMPACTO && fuerzaImpacto > IMPACTO) {
+      if (posibleCaida && (millis() - tiempoCaida <= TIEMPO_VERIFICAR_IMPACTO) && fuerzaImpacto > IMPACTO) {
         Serial.println("Caída confirmada");
         posibleCaida = false;
         tiempoConectarLlamada = millis();
         estadoActual = llamada;
       }
-      if (posibleCaida && millis() - tiempoCaida > TIEMPO_VERIFICAR_IMPACTO) {
+      if (posibleCaida && (millis() - tiempoCaida > TIEMPO_VERIFICAR_IMPACTO)) {
         Serial.println("No se cayó nadie, esperando a detectar otra caída");
         posibleCaida = false;
         espera = millis();
@@ -371,7 +393,7 @@ void loop() {
       break;
     }
   }
-
+  
   tira.fill(tira.Color(255, 255, 255));
   tira.show();
 }
