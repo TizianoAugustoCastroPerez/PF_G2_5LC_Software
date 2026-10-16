@@ -8,8 +8,8 @@
 #include <addons/TokenHelper.h>
 
 // datos Wi-Fi (a futuro obtenerlos)
-#define WIFI_SSID "TU_RED_WIFI"
-#define WIFI_PASSWORD "TU_CONTRASEÑA_WIFI"
+#define WIFI_SSID "MOVISTAR WIFI2114"
+#define WIFI_PASSWORD "gnub6271"
 
 // Datos de Firebase
 #define API_KEY "AIzaSyBXhosDmHuymixnz3hlY0QEeM4dXKZSsoI"
@@ -67,24 +67,38 @@ unsigned long tiempoConectarLlamada = 0;
 String obtenerMacLimpia() {
   String mac = WiFi.macAddress();
   mac.replace(":", "");
+  mac.toUpperCase();
   return mac;
 }
+
+
 String obtenerUserIdDesdeFirestore() {
   String idUsuarioEncontrado = "";
   if (Firebase.ready()) {
-    String mac = obtenerMacLimpia();
+    String mac = obtenerMacLimpia(); 
     Serial.print("Buscando usuario con MAC: ");
     Serial.println(mac);
+
+
     FirebaseJson json;
-    json.set("structuredQuery/from/[0]/collectionId", "usuarios");
-    json.set("structuredQuery/where/fieldFilter/field/fieldPath", "direccionMac");
-    json.set("structuredQuery/where/fieldFilter/op", "EQUAL");
-    json.set("structuredQuery/where/fieldFilter/value/stringValue", mac);
+    // CORRECCIÓN: Se remueve "structuredQuery/" del inicio de las rutas
+    json.set("from/[0]/collectionId", "usuarios");
+    json.set("where/fieldFilter/field/fieldPath", "direccionMac");
+    json.set("where/fieldFilter/op", "EQUAL");
+    json.set("where/fieldFilter/value/stringValue", mac);
+
+
     if (Firebase.Firestore.runQuery(&fbdo, FIREBASE_PROJECT_ID, "", "", &json)) {
+      Serial.print("Respuesta cruda de Firestore: ");
+      Serial.println(fbdo.payload().c_str());
+
+
       FirebaseJson payload;
       payload.setJsonData(fbdo.payload().c_str());
       FirebaseJsonData jsonData;
       payload.get(jsonData, "[0]/document/name");
+
+
       if (jsonData.success) {
         String docPath = jsonData.to<String>();
         int lastSlash = docPath.lastIndexOf('/');
@@ -103,6 +117,9 @@ String obtenerUserIdDesdeFirestore() {
   }
   return idUsuarioEncontrado;
 }
+
+
+
 void obtenerTelefonosFirestore() {
   if (Firebase.ready()) {
     String userId = obtenerUserIdDesdeFirestore();
