@@ -72,22 +72,33 @@ String obtenerMacLimpia() {
 String obtenerUserIdDesdeFirestore() {
   String idUsuarioEncontrado = "";
   if (Firebase.ready()) {
-    String mac = obtenerMacLimpia();
-    String documentPath = "dispositivos/" + mac;
-    Serial.print("Consultando dispositivo con MAC: ");
+    String mac = WiFi.macAddress(); 
+    Serial.print("Buscando usuario con MAC: ");
     Serial.println(mac);
-    if (Firebase.Firestore.getDocument(&fbdo, FIREBASE_PROJECT_ID, "", documentPath.c_str(), "")) {
+    FirebaseJson json;
+    json.set("structuredQuery/from/[0]/collectionId", "usuarios");
+    json.set("structuredQuery/where/fieldFilter/field/fieldPath", "direccionMac");
+    json.set("structuredQuery/where/fieldFilter/op", "EQUAL");
+    json.set("structuredQuery/where/fieldFilter/value/stringValue", mac);
+    if (Firebase.Firestore.runQuery(&fbdo, FIREBASE_PROJECT_ID, "", "", &json)) {
       FirebaseJson payload;
       payload.setJsonData(fbdo.payload().c_str());
       FirebaseJsonData jsonData;
-      payload.get(jsonData, "fields/userId/stringValue");
+      payload.get(jsonData, "[0]/document/name");
       if (jsonData.success) {
-        idUsuarioEncontrado = jsonData.to<String>();
-        Serial.print("Dispositivo vinculado al usuario: ");
-        Serial.println(idUsuarioEncontrado);
+        String docPath = jsonData.to<String>();
+        int lastSlash = docPath.lastIndexOf('/');
+        if (lastSlash != -1) {
+          idUsuarioEncontrado = docPath.substring(lastSlash + 1);
+          Serial.print("Usuario encontrado: ");
+          Serial.println(idUsuarioEncontrado);
+        }
+      } else {
+        Serial.println("No se encontró ningún usuario vinculado a esta MAC.");
       }
     } else {
-      Serial.println("Este dispositivo aún no está vinculado a ningún usuario.");
+      Serial.print("Error al ejecutar query en Firestore: ");
+      Serial.println(fbdo.errorReason());
     }
   }
   return idUsuarioEncontrado;
