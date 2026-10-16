@@ -7,7 +7,7 @@
 #include <Firebase_ESP_Client.h>
 #include <addons/TokenHelper.h>
 
-// datos Wi-Fi (a futuro obtenerlos)
+// datos Wi-Fi (se permite hard-codearlos)
 #define WIFI_SSID "MOVISTAR WIFI2114"
 #define WIFI_PASSWORD "gnub6271"
 
@@ -70,35 +70,24 @@ String obtenerMacLimpia() {
   mac.toUpperCase();
   return mac;
 }
-
-
 String obtenerUserIdDesdeFirestore() {
   String idUsuarioEncontrado = "";
   if (Firebase.ready()) {
     String mac = obtenerMacLimpia(); 
     Serial.print("Buscando usuario con MAC: ");
     Serial.println(mac);
-
-
     FirebaseJson json;
-    // CORRECCIÓN: Se remueve "structuredQuery/" del inicio de las rutas
     json.set("from/[0]/collectionId", "usuarios");
     json.set("where/fieldFilter/field/fieldPath", "direccionMac");
     json.set("where/fieldFilter/op", "EQUAL");
     json.set("where/fieldFilter/value/stringValue", mac);
-
-
     if (Firebase.Firestore.runQuery(&fbdo, FIREBASE_PROJECT_ID, "", "", &json)) {
       Serial.print("Respuesta cruda de Firestore: ");
       Serial.println(fbdo.payload().c_str());
-
-
       FirebaseJson payload;
       payload.setJsonData(fbdo.payload().c_str());
       FirebaseJsonData jsonData;
       payload.get(jsonData, "[0]/document/name");
-
-
       if (jsonData.success) {
         String docPath = jsonData.to<String>();
         int lastSlash = docPath.lastIndexOf('/');
@@ -117,9 +106,6 @@ String obtenerUserIdDesdeFirestore() {
   }
   return idUsuarioEncontrado;
 }
-
-
-
 void obtenerTelefonosFirestore() {
   if (Firebase.ready()) {
     String userId = obtenerUserIdDesdeFirestore();
@@ -173,12 +159,10 @@ String enviarComando(String comando, unsigned long tiempoEspera = 2000) {
   }
   return respuesta;
 }
-
 bool estaRegistradoEnRed() {
   String resp = enviarComando("AT+CREG?", 2000);
   return (resp.indexOf("+CREG: 0,1") != -1 || resp.indexOf("+CREG: 0,5") != -1);
 }
-
 void enviarSMS(String numDestino) {
   Serial.print("Enviando SMS a: ");
   Serial.println(numDestino);
@@ -246,7 +230,7 @@ bool realizarLlamadaVerificada(String numDestino) {
   sim800.println("ATD" + numDestino + ";");
   unsigned long inicio = millis();
   bool atendio = false;
-  while (millis() - inicio < DURACION_INTENTO_LLAMADA) {
+  while (millis() - inicio <= DURACION_INTENTO_LLAMADA) {
     if (sim800.available()) {
       String respuesta = sim800.readString();
       Serial.print(respuesta);
