@@ -119,7 +119,7 @@ void obtenerTelefonosFirestore() {
         String path = "fields/telefonos/arrayValue/values/[" + String(i) + "]/stringValue";
         payload.get(jsonData, path.c_str());
         if (jsonData.success) {
-          String num = jsonData.to<String>();
+          String num = "+549" + jsonData.to<String>();
           listaTelefonos[cantidadTelefonos] = num;
           Serial.print("Teléfono prioridad ");
           Serial.print(cantidadTelefonos);
