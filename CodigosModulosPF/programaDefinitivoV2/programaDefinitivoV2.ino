@@ -144,25 +144,15 @@ void obtenerDatosUsuarioFirestore() {
       payload.setJsonData(fbdo.payload().c_str());
       FirebaseJsonData jsonData;
 
-      // Obtener nombreCompleto
       payload.get(jsonData, "fields/nombreCompleto/stringValue");
-      if (jsonData.success) {
-        nombreCompleto = jsonData.to<String>();
-      }
+      if (jsonData.success) nombreCompleto = jsonData.to<String>();
 
-      // Obtener perfilMedico
       payload.get(jsonData, "fields/perfilMedico/stringValue");
-      if (jsonData.success) {
-        perfilMedico = jsonData.to<String>();
-      }
+      if (jsonData.success) perfilMedico = jsonData.to<String>();
 
-      // Obtener direccion
       payload.get(jsonData, "fields/direccion/stringValue");
-      if (jsonData.success) {
-        direccion = jsonData.to<String>();
-      }
+      if (jsonData.success) direccion = jsonData.to<String>();
 
-      // Obtener lista de teléfonos con sanitizado de prefijos
       cantidadTelefonos = 0;
       for (int i = 0; i < 3; i++) {
         String path = "fields/telefonos/arrayValue/values/[" + String(i) + "]/stringValue";
@@ -171,13 +161,9 @@ void obtenerDatosUsuarioFirestore() {
           String num = jsonData.to<String>();
           num.trim();
           if (!num.startsWith("+")) {
-            if (num.startsWith("549")) {
-              num = "+" + num;
-            } else if (num.startsWith("9")) {
-              num = "+54" + num;
-            } else {
-              num = "+549" + num;
-            }
+            if (num.startsWith("549")) num = "+" + num;
+            else if (num.startsWith("9")) num = "+54" + num;
+            else num = "+549" + num;
           }
           listaTelefonos[cantidadTelefonos] = num;
           Serial.print("Teléfono prioridad ");
@@ -206,34 +192,26 @@ void actualizarEstadoFirestore(bool caido, bool enCasa) {
     FirebaseJson content;
     content.set("fields/seCayo/booleanValue", caido);
     content.set("fields/enCasa/booleanValue", enCasa);
-    Serial.print("Actualizando Firestore -> seCayo: ");
-    Serial.print(caido ? "true" : "false");
-    Serial.print(" | enCasa: ");
-    Serial.println(enCasa ? "true" : "false");
     if (Firebase.Firestore.patchDocument(&fbdo, FIREBASE_PROJECT_ID, "", documentPath.c_str(), content.raw(), "seCayo,enCasa")) {
       Serial.println("Estado enviado a Firestore con éxito.");
-    } else {
-      Serial.print("Error al parchear documento en Firestore: ");
-      Serial.println(fbdo.errorReason());
     }
   }
 }
 
 void actualizarCada30s() {
-  Serial.println("\n--- [30s] Refrescando dirección MAC, datos de usuario, teléfonos y estado en Firestore ---");
-  String macActual = obtenerMacLimpia();
-  Serial.print("Dirección MAC: ");
-  Serial.println(macActual);
+  Serial.println("\n--- Refrescando datos en Firestore ---");
   estaEnCasa = verificarSiEstaEnCasa();
-  Serial.print("Ubicación actual: ");
-  Serial.println(estaEnCasa ? "EN CASA" : "DESCONOCIDA");
   obtenerDatosUsuarioFirestore();
   actualizarEstadoFirestore(estaCaido, estaEnCasa);
 }
 
 // FUNCIONES SIM800L
-String enviarComando(String comando, unsigned long tiempoEspera = 2000) {
+void limpiarBufferSerial() {
   while (sim800.available()) sim800.read();
+}
+
+String enviarComando(String comando, unsigned long tiempoEspera = 2000) {
+  limpiarBufferSerial();
   Serial.print("Enviando: ");
   Serial.println(comando);
   sim800.println(comando);
@@ -255,90 +233,108 @@ bool estaRegistradoEnRed() {
 }
 
 String construirMensajeSMS() {
-  String msj = "ALERTA DE CAIDA DETECTADA!\n";
-  msj += "Paciente: " + (nombreCompleto.length() > 0 ? nombreCompleto : "No especificado") + "\n";
-  msj += "Perfil Medico: " + (perfilMedico.length() > 0 ? perfilMedico : "No especificado") + "\n";
-  msj += "Direccion: " + (direccion.length() > 0 ? direccion : "No especificada") + "\n";
-  msj += "Ubicacion: " + String(estaEnCasa ? "En CASA" : "FUERA de casa");
+  String msj = "ALERTA CAIDA! Paciente: ";
+  msj += (nombreCompleto.length() > 0 ? nombreCompleto : "Sin nombre");
+  msj += " | Perfil: " + (perfilMedico.length() > 0 ? perfilMedico : "N/A");
+  msj += " | Dir: " + (direccion.length() > 0 ? direccion : "N/A");
+  msj += " | Ubicacion: " + String(estaEnCasa ? "En CASA" : "FUERA de casa");
   return msj;
 }
 
-void enviarSMS(String numDestino, String textoMensaje) {
-  Serial.print("Enviando SMS a: ");
-  Serial.println(numDestino);
-  unsigned long esperaLocal = millis();
-  int casos = 1;
-  bool ejecutarUnaVez = true;
-  bool ejecutarFuncion = true;
-  const int tiempoCaso1 = 300;   
-  const int tiempoCaso2 = 600;  
-  const int tiempoCaso3 = 1000;  
-  const int tiempoCaso4 = 5000;
-
-  while (ejecutarFuncion) {
-    if (casos == 1) {
-      if (ejecutarUnaVez) {
-        sim800.println("AT+CMGF=1");
-        ejecutarUnaVez = false;
-      }
-      if (millis() - esperaLocal >= tiempoCaso1) {
-        casos = 2;
-        ejecutarUnaVez = true;
-        esperaLocal = millis(); 
-      }
-    }
-    else if (casos == 2) {
-      if (ejecutarUnaVez) {
-        sim800.print("AT+CMGS=\"");
-        sim800.print(numDestino);
-        sim800.println("\"");
-        ejecutarUnaVez = false;
-      }
-      if (millis() - esperaLocal >= tiempoCaso2) {
-        casos = 3;
-        ejecutarUnaVez = true;
-        esperaLocal = millis();
-      }
-    }
-    else if (casos == 3) {
-      if (ejecutarUnaVez) {
-        sim800.print(textoMensaje);
-        ejecutarUnaVez = false;
-      }
-      if (millis() - esperaLocal >= tiempoCaso3) {
-        casos = 4;
-        ejecutarUnaVez = true;
-        esperaLocal = millis();
-      }
-    }  
-    else if (casos == 4) {
-      if (ejecutarUnaVez) {
-        sim800.write(26); // Enviar CTRL+Z
-        ejecutarUnaVez = false;
-      }
-      if (millis() - esperaLocal >= tiempoCaso4) {
-        ejecutarFuncion = false; 
-      }
-    }  
+// ENVÍO DE SMS ADAPTADO A REDES ARGENTINAS
+bool enviarSMS(String numDestino, String textoMensaje) {
+  // Ajuste de prefijo: Remueve el '9' de '+549' exclusivo para el SMS
+  String numSms = numDestino;
+  if (numSms.startsWith("+549")) {
+    numSms = "+54" + numSms.substring(4);
   }
+
+  Serial.print("\n--- [SMS] Número para llamada: ");
+  Serial.println(numDestino);
+  Serial.print("--- [SMS] Número adaptado para SMS: ");
+  Serial.println(numSms);
+
+  limpiarBufferSerial();
+  
+  enviarComando("AT+CMEE=2", 1000);
+  enviarComando("AT+CSCS=\"GSM\"", 1000);
+  enviarComando("AT+CMGF=1", 1000);
+  enviarComando("AT+CSCA?", 1000); // Consulta el Centro de Servicios de SMS
+
+  limpiarBufferSerial();
+  sim800.print("AT+CMGS=\"");
+  sim800.print(numSms);
+  sim800.println("\"");
+
+  unsigned long inicio = millis();
+  bool promptRecibido = false;
+  while (millis() - inicio < 5000) {
+    if (sim800.available()) {
+      char c = sim800.read();
+      Serial.write(c);
+      if (c == '>') {
+        promptRecibido = true;
+        break;
+      }
+    }
+  }
+
+  if (!promptRecibido) {
+    Serial.println("\n[ERROR SMS] Sin respuesta del prompt '>'. Cancelando.");
+    sim800.write(27);
+    delay(1000);
+    return false;
+  }
+
+  sim800.print(textoMensaje);
+  delay(500);
+  sim800.write(26); // CTRL+Z
+
+  inicio = millis();
+  String respuesta = "";
+  bool enviado = false;
+  while (millis() - inicio < 15000) {
+    while (sim800.available()) {
+      char c = sim800.read();
+      respuesta += c;
+      Serial.write(c);
+    }
+    if (respuesta.indexOf("+CMGS:") != -1 && respuesta.indexOf("OK") != -1) {
+      enviado = true;
+      break;
+    }
+    if (respuesta.indexOf("ERROR") != -1 || respuesta.indexOf("+CMS ERROR") != -1) {
+      enviado = false;
+      break;
+    }
+  }
+
+  if (enviado) {
+    Serial.println("\n[ÉXITO SMS] SMS enviado correctamente.");
+  } else {
+    Serial.println("\n[FALLO SMS] SMS rechazado por la red.");
+  }
+
+  delay(2000);
+  return enviado;
 }
 
 bool realizarLlamadaVerificada(String numDestino) {
   Serial.print("\nIniciando llamada a: ");
   Serial.println(numDestino);
 
-  // Guard Time: Libera el canal GSM de llamadas o SMS anteriores
+  limpiarBufferSerial();
   enviarComando("ATH", 1000);
-  delay(2000); 
+  delay(1000); 
 
-  // Verificar que el módem responda OK antes de enviar ATD
   String testAT = enviarComando("AT", 1000);
   if (testAT.indexOf("OK") == -1) {
-    Serial.println("--> Módem ocupado o sin respuesta. Forzando colgado...");
+    Serial.println("--> Módem no responde. Forzando colgado...");
     enviarComando("ATH", 1000);
     delay(1000);
   }
 
+  limpiarBufferSerial();
   sim800.println("ATD" + numDestino + ";");
   
   unsigned long inicio = millis();
@@ -367,19 +363,14 @@ bool realizarLlamadaVerificada(String numDestino) {
       break;
     }
     if (respuestaAcumulada.indexOf("NO CARRIER") != -1) {
-      if (atendio) {
-        Serial.println("\n--> El contacto atendió y luego colgó la llamada.");
-      } else {
-        Serial.println("\n--> El contacto cortó / rechazó la llamada antes de atender.");
-      }
+      Serial.println("\n--> Cortó / rechazó la llamada.");
       break; 
     }
     
     if (!atendio && (millis() - ultimoCLCC >= 1500)) {
       ultimoCLCC = millis();
-      if (respuestaAcumulada.length() > 300) {
-        respuestaAcumulada = ""; 
-      }
+      if (respuestaAcumulada.length() > 300) respuestaAcumulada = ""; 
+      
       sim800.println("AT+CLCC");
       unsigned long tCLCC = millis();
       String respCLCC = "";
@@ -400,8 +391,7 @@ bool realizarLlamadaVerificada(String numDestino) {
         if (primeraComa != -1 && segundaComa != -1 && terceraComa != -1) {
           String estadoStr = sub.substring(segundaComa + 1, terceraComa);
           estadoStr.trim();
-          int estadoLlamada = estadoStr.toInt();
-          if (estadoLlamada == 0) { // 0 = Llamada activa
+          if (estadoStr.toInt() == 0) { // 0 = Llamada activa
             Serial.println("\n--> ¡Llamada ATENDIDA! (Detectado por AT+CLCC)");
             atendio = true;
             break;
@@ -412,29 +402,25 @@ bool realizarLlamadaVerificada(String numDestino) {
   }
 
   if (atendio) {
-    Serial.println("Llamada en curso. Comunicando...");
+    Serial.println("Llamada en curso...");
     unsigned long inicioHablada = millis();
     while (millis() - inicioHablada < DURACION_LLAMADA_CONECTADA) {
-      while (sim800.available()) {
-        char c = sim800.read();
-        Serial.write(c);
-      }
+      while (sim800.available()) Serial.write(sim800.read());
       delay(50);
     }
   }
   
   enviarComando("ATH", 1000);
-  delay(2000); // Pausa de estabilización tras colgar
+  delay(2000);
   return atendio;
 }
 
-// SETUP Y LOOP PRINCIPAL
+// SETUP Y LOOP
 
 void setup() {
   Serial.begin(115200);
   pinMode(PIN_BOTON, INPUT_PULLUP);
   
-  // 1. Inicialización MPU6050
   Wire.begin();
   mpu.initialize();
   while (!mpu.testConnection()) {
@@ -442,27 +428,20 @@ void setup() {
     delay(500);
   }
 
-  // 2. Inicialización SIM800L
   sim800.begin(9600, SERIAL_8N1, RXD2, TXD2);
+  Serial.println("Iniciando SIM800L...");
   delay(3000);
+
   enviarComando("AT");
-  enviarComando("AT+CPIN?"); 
-  enviarComando("AT+CSQ");   
+  enviarComando("AT+CSQ");
 
   Serial.println("Esperando registro en la red celular...");
-  unsigned long inicioReg = millis();
-  while (!estaRegistradoEnRed() && (millis() - inicioReg < 30000)) {
-    delay(1000);
-    Serial.print(".");
+  while (!estaRegistradoEnRed()) {
+    Serial.println("-> Sin registro en red aun. Reintentando en 3s...");
+    delay(3000);
   }
-  
-  if (estaRegistradoEnRed()) {
-    Serial.println("\n¡SIM800L registrado en la red celular exitosamente!");
-  } else {
-    Serial.println("\nADVERTENCIA: No se pudo registrar en la red celular en el arranque.");
-  }
+  Serial.println(">>> ¡REGISTRADO CORRECTAMENTE EN LA RED! <<<");
 
-  // 3. Conexión Wi-Fi
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.print("Conectando a Wi-Fi");
   while (WiFi.status() != WL_CONNECTED) {
@@ -472,10 +451,7 @@ void setup() {
   Serial.println("\nWi-Fi Conectado.");
 
   bssidCasa = WiFi.BSSIDstr();
-  Serial.print("BSSID de router de casa registrado: ");
-  Serial.println(bssidCasa);
 
-  // 4. Configuración Firebase
   config.api_key = API_KEY;
   auth.user.email = "tizianoacp08@gmail.com";
   auth.user.password = "Tiziano2008";
@@ -483,9 +459,7 @@ void setup() {
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
 
-  // 5. Carga inicial de datos desde Firestore
   actualizarCada30s();
-
   Serial.println("Sistema listo.");
 }
 
@@ -561,30 +535,30 @@ void loop() {
 
         for (int i = 0; i < cantidadTelefonos; i++) {
           String numActual = listaTelefonos[i];
-          Serial.print("\n=== INTENTO ");
+          Serial.print("\n==========================================");
+          Serial.print("\n INTENTO ");
           Serial.print(i + 1);
+          Serial.print(" DE ");
+          Serial.print(cantidadTelefonos);
           Serial.print(" - CONTACTO: ");
-          Serial.print(numActual);
-          Serial.println(" ===");
+          Serial.println(numActual);
+          Serial.println("==========================================");
           
-          // 1. Enviar el SMS con todos los datos
           enviarSMS(numActual, mensajeCompletoSMS);
           
-          // 2. Pausa crucial para permitir que el SIM800L termine de enviar los paquetes de datos del SMS a la celda
-          delay(3000); 
-
-          // 3. Marcar por llamada
           bool contestado = realizarLlamadaVerificada(numActual);
           if (contestado) {
             alguienAtendio = true;
             Serial.println("Emergencia atendida por un contacto. Finalizando secuencia.");
             break;
           }
+          
+          Serial.println("Contacto no atendió. Pasando al siguiente número...");
           delay(2000); 
         }
 
         if (!alguienAtendio && cantidadTelefonos > 0) {
-          Serial.println("NINGÚN CONTACTO ATENDIÓ. LLAMANDO AL 911...");
+          Serial.println("\nNINGÚN CONTACTO ATENDIÓ. LLAMANDO AL 911...");
           realizarLlamadaVerificada("911");
         }
 
