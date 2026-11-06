@@ -173,17 +173,19 @@ void obtenerDatosUsuarioFirestore() {
         if (jsonData.success) {
           String num = jsonData.to<String>();
           num.trim();
-          if (!num.startsWith("+")) {
-            if (num.startsWith("549")) num = "+" + num;
-            else if (num.startsWith("9")) num = "+54" + num;
-            else num = "+549" + num;
+          if (num.length() > 0) {
+            if (!num.startsWith("+")) {
+              if (num.startsWith("549")) num = "+" + num;
+              else if (num.startsWith("9")) num = "+54" + num;
+              else num = "+549" + num;
+            }
+            listaTelefonos[cantidadTelefonos] = num;
+            Serial.print("Teléfono prioridad ");
+            Serial.print(cantidadTelefonos);
+            Serial.print(": ");
+            Serial.println(num);
+            cantidadTelefonos++;
           }
-          listaTelefonos[cantidadTelefonos] = num;
-          Serial.print("Teléfono prioridad ");
-          Serial.print(cantidadTelefonos);
-          Serial.print(": ");
-          Serial.println(num);
-          cantidadTelefonos++;
         } else {
           break;
         }
@@ -248,7 +250,17 @@ bool estaRegistradoEnRed() {
 }
 
 String construirMensajeSMS() {
-  String msj = "ALERTA CAIDA! Paciente: ";
+  String msj = "";
+  
+  // Diferenciar encabezado según el origen de la alerta
+  if (tipoAlerta == "BOTON") {
+    msj = "ALERTA BOTON DE EMERGENCIA! Paciente: ";
+  } else if (tipoAlerta == "CAIDA") {
+    msj = "ALERTA CAIDA DETECTADA! Paciente: ";
+  } else {
+    msj = "ALERTA DE EMERGENCIA! Paciente: ";
+  }
+
   msj += (nombreCompleto.length() > 0 ? nombreCompleto : "Sin nombre");
   msj += " | Perfil: " + (perfilMedico.length() > 0 ? perfilMedico : "N/A");
   msj += " | Dir: " + (direccion.length() > 0 ? direccion : "N/A");
