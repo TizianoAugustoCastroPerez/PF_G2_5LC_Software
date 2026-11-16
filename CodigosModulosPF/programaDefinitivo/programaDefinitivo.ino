@@ -449,7 +449,7 @@ void setup() {
   
   // Inicialización Anillo NeoPixel
   tira.begin();
-  tira.setBrightness(255);
+  tira.setBrightness(120);
   mantenerLedsEncendidos();
   
   Wire.begin();
