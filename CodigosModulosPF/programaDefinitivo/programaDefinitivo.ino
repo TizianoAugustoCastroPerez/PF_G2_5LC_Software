@@ -215,7 +215,7 @@ void actualizarEstadoFirestore(bool caido, bool enCasa, String origen) {
   }
 }
 
-void actualizarCada90s() {
+void actualizarCada1h() {
   Serial.println("\n--- Refrescando datos en Firestore (Cada 90s) ---");
   estaEnCasa = verificarSiEstaEnCasa();
   obtenerDatosUsuarioFirestore();
@@ -490,7 +490,7 @@ void setup() {
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
 
-  actualizarCada90s();
+  actualizarCada1h();
   Serial.println("Sistema listo.");
 }
 
@@ -618,6 +618,6 @@ void loop() {
 
   if (estadoActual == esperaCaida && (millis() - tiempoUltimoRefresco1h >= INTERVALO_REFRESCO_1H)) {
     tiempoUltimoRefresco1h = millis();
-    actualizarCada90s();
+    actualizarCada1h();
   }
 }
