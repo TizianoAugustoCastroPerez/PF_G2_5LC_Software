@@ -44,10 +44,10 @@ Adafruit_NeoPixel tira(NUM_LEDS, PIN_DATOS_LED, NEO_GRB + NEO_KHZ800);
 #define DURACION_INTENTO_LLAMADA 25000
 #define DURACION_LLAMADA_CONECTADA 5000
 #define ESPERA_CONECTAR_LLAMADA 30000 
-#define INTERVALO_REFRESCO_90S 90000
+#define INTERVALO_REFRESCO_1H 3600000
 
-// Temporizador para actualización periódica cada 90 segundos
-unsigned long tiempoUltimoRefresco90s = 0;
+// Temporizador para actualización periódica cada 1 hora
+unsigned long tiempoUltimoRefresco1h = 0;
 
 // Estados del Adulto / Ubicación / Datos del Usuario (Firestore)
 bool estaCaido = false;
@@ -616,8 +616,8 @@ void loop() {
     }
   }
 
-  if (estadoActual == esperaCaida && (millis() - tiempoUltimoRefresco90s >= INTERVALO_REFRESCO_90S)) {
-    tiempoUltimoRefresco90s = millis();
+  if (estadoActual == esperaCaida && (millis() - tiempoUltimoRefresco1h >= INTERVALO_REFRESCO_1H)) {
+    tiempoUltimoRefresco1h = millis();
     actualizarCada90s();
   }
 }
