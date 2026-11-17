@@ -5,7 +5,6 @@
 
 #define CAIDA_LIBRE 0.4
 #define IMPACTO 2.0
-#define TIEMPO_VERIFICAR_IMPACTO 2000
 #define TIEMPO_ESPERA 100 // 100 ms = 10 datos por segundo (10 Hz)
 #define CONVERSION_A_VALOR_REAL 16384.0
 
@@ -13,8 +12,6 @@ MPU6050 mpu;
 BluetoothSerial SerialBT;
 
 int16_t ax, ay, az;
-bool posibleCaida = false;
-unsigned long tiempoCaida = 0;
 unsigned long espera = 0;
 
 void setup() {
@@ -29,9 +26,6 @@ void setup() {
     delay(500);
   }
   Serial.println("MPU6050 conectado");
-  
-  // Encabezado de columnas para abrir luego en Excel
-  SerialBT.println("Tiempo_ms,Ax,Ay,Az,FuerzaTotal,Evento");
 }
 
 void loop() {
@@ -44,33 +38,16 @@ void loop() {
     float Az = az / CONVERSION_A_VALOR_REAL;
     float fuerzaCaida = sqrt(Ax * Ax + Ay * Ay + Az * Az);
 
-    String evento = "Normal";
+    // Envía primero el valor numérico
+    SerialBT.print(fuerzaCaida, 2);
 
-    // CAÍDA LIBRE
-    if (fuerzaCaida < CAIDA_LIBRE && !posibleCaida) {
-      posibleCaida = true;
-      tiempoCaida = millis();
-      evento = "POSIBLE_CAIDA";
+    // Agrega la etiqueta a la derecha si supera alguno de los umbrales
+    if (fuerzaCaida < CAIDA_LIBRE) {
+      SerialBT.print(" inicio caida");
+    } else if (fuerzaCaida > IMPACTO) {
+      SerialBT.print(" fin caida");
     }
 
-    // IMPACTO
-    if (posibleCaida && (millis() - tiempoCaida <= TIEMPO_VERIFICAR_IMPACTO) && fuerzaCaida > IMPACTO) {
-      posibleCaida = false;
-      evento = "CAIDA_CONFIRMADA";
-    }
-
-    // SIN IMPACTO
-    if (posibleCaida && (millis() - tiempoCaida > TIEMPO_VERIFICAR_IMPACTO)) {
-      posibleCaida = false;
-      evento = "FALSA_ALARMA";
-    }
-
-    // Envío de la fila CSV por Bluetooth
-    SerialBT.print(millis());       SerialBT.print(",");
-    SerialBT.print(Ax, 2);          SerialBT.print(",");
-    SerialBT.print(Ay, 2);          SerialBT.print(",");
-    SerialBT.print(Az, 2);          SerialBT.print(",");
-    SerialBT.print(fuerzaCaida, 2); SerialBT.print(",");
-    SerialBT.println(evento);
+    SerialBT.println(); // Salto de línea para la siguiente lectura
   }
 }
