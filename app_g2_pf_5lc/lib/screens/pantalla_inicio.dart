@@ -6,70 +6,92 @@ class PantallaInicio extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tipoUsuario =
+        GoRouterState.of(context).uri.queryParameters['tipo'] ?? 'responsable';
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Proyecto"),
-        centerTitle: true,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(25),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              "assets/logo.png",
-              height: 180,
+      appBar: AppBar(title: const Text("Proyecto")),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.sizeOf(context).height - 112,
             ),
-
-            const SizedBox(height: 30),
-
-            const Text(
-              "Inicie sesión o regístrese",
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 40),
-
-            Row(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Expanded(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      minimumSize: const Size(0, 80),
-                    ),
-                    onPressed: () {
-                      context.go('/login');
-                    },
-                    child: const Text(
-                      "Iniciar\nSesión",
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(width: 20),
-
-                Expanded(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      minimumSize: const Size(0, 80),
-                    ),
-                    onPressed: () {
-                      context.go('/register');
-                    },
-                    child: const Text(
-                      "Registrarse",
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(28),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 180,
+                          height: 180,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE7F0F8),
+                            borderRadius: BorderRadius.circular(56),
+                          ),
+                          child: const Icon(
+                            Icons.health_and_safety_outlined,
+                            size: 96,
+                            color: Color(0xFF527A9E),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Text(
+                          "Inicie sesión o regístrese",
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Acceda a su cuenta o cree una nueva para continuar.',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        const SizedBox(height: 28),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: FilledButton.tonalIcon(
+                                style: FilledButton.styleFrom(
+                                  minimumSize: const Size(0, 64),
+                                ),
+                                onPressed: () => context.go('/login'),
+                                icon: const Icon(Icons.login),
+                                label: const Text(
+                                  "Iniciar sesión",
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: FilledButton.tonalIcon(
+                                style: FilledButton.styleFrom(
+                                  minimumSize: const Size(0, 64),
+                                ),
+                                onPressed: () =>
+                                    context.go('/register?tipo=$tipoUsuario'),
+                                icon: const Icon(Icons.person_add_alt_1),
+                                label: const Text(
+                                  "Registrarse",
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );

@@ -13,94 +13,74 @@ class PantallaPrincipal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Página principal"),
-        centerTitle: true,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
+      appBar: AppBar(title: const Text("Página principal")),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(20),
           children: [
-            const Text(
-              "Descripción a futuro...\n\n"
-            ),
-
-            const SizedBox(height: 40),
-
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton(
-                onPressed: () {
-                  context.go('/numeros');
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                ),
-                child: const Text(
-                  "Ingresar lista de números telefónicos",
-                  style: TextStyle(fontSize: 16),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 15),
-
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton(
-                onPressed: () {
-                  context.go('/perfil_medico');
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                ),
-                child: const Text(
-                  "Perfil médico",
-                  style: TextStyle(fontSize: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.dashboard_outlined,
+                      size: 32,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Datos del adulto mayor',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      "En esta pantalla se ingresan todos los datos "
+                      "necesarios del adulto mayor para que funcione la "
+                      "aplicación correctamente.",
+                    ),
+                  ],
                 ),
               ),
             ),
-
-            const SizedBox(height: 15),
-
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton(
-                onPressed: () {
-                  context.go('/guia');
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.amber,
-                  foregroundColor: Colors.black,
-                ),
-                child: const Text(
-                  "Guía de la aplicación",
-                  style: TextStyle(fontSize: 16),
-                ),
-              ),
+            const SizedBox(height: 20),
+            FilledButton.tonalIcon(
+              onPressed: () => context.go('/numeros'),
+              icon: const Icon(Icons.phone_outlined),
+              label: const Text("Ingresar lista de números telefónicos"),
             ),
-
-            const Spacer(),
-
-            SizedBox(
-              width: double.infinity,
-              height: 70,
-              child: ElevatedButton(
-                onPressed: () => cerrarSesion(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                ),
-                child: const Text(
-                  "Cerrar sesión",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+            const SizedBox(height: 10),
+            FilledButton.tonalIcon(
+              onPressed: () => context.go('/perfil_medico'),
+              icon: const Icon(Icons.medical_information_outlined),
+              label: const Text("Perfil médico"),
+            ),
+            const SizedBox(height: 10),
+            FilledButton.tonalIcon(
+              onPressed: () => context.go('/guia'),
+              icon: const Icon(Icons.menu_book_outlined),
+              label: const Text("Guía de la aplicación"),
+            ),
+            const SizedBox(height: 10),
+            FilledButton.tonalIcon(
+              onPressed: () => context.go('/casa'),
+              icon: const Icon(Icons.home_outlined),
+              label: const Text("Cambiar domicilio"),
+            ),
+            const SizedBox(height: 10),
+            FilledButton.tonalIcon(
+              onPressed: () => context.go('/mac'),
+              icon: const Icon(Icons.memory_outlined),
+              label: const Text("Cambiar dirección MAC"),
+            ),
+            const SizedBox(height: 20),
+            OutlinedButton.icon(
+              onPressed: () => cerrarSesion(context),
+              icon: const Icon(Icons.logout),
+              label: const Text("Cerrar sesión"),
             ),
           ],
         ),
